@@ -2,7 +2,7 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const initializeSocket = require("./socket/socket");
-const { initializeArduino } = require("./utils/esp/connection");
+const rosBridgeConnection = require("./utils/ros/connection");
 
 const app = express();
 const server = http.createServer(app);
@@ -14,8 +14,8 @@ app.use(express.json());
 // Initialize Socket.IO
 const io = initializeSocket(server);
 
-// Initialize Arduino connection
-initializeArduino(io);
+// Initialize ROS Bridge connection module
+rosBridgeConnection.api.initialize(io);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

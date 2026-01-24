@@ -1,142 +1,208 @@
-/**
- * @file communication.tsx
- * @version 1.0.0
- * @description The main container component for the "Communication Configuration" card.
- * It now manages all state and logic for ROV and Controller connections internally,
- * passing them down as props to child components.
- */
-
 import {useEffect, useState} from "react";
 import {socket, events} from "../../../../utils/socket/socket";
 import Card from "../../../../components/card";
 import Connection from "../../../../components/connection/connection";
-import SelectMenu from "../SelectMenu";
 import ActionButton from "./ActionButton";
 import Logs from "./Logs";
 import {useAtom} from "jotai";
 import {
-  isRovConnectedAtom,
-  isControllerConnectedAtom,
-} from "../../../../../atoms/atoms"; // Import atoms for connection states
+    isRovConnectedAtom,
+    isControllerConnectedAtom,
+} from "../../../../../atoms/atoms";
+
+const DEFAULT_ROS_BRIDGE_URLS = [
+    "ws://localhost:9090",
+    "ws://192.168.1.100:9090",
+    "ws://10.0.0.1:9090",
+];
 
 export default function Communication() {
-  // --- Local State Management ---
-  const [comPorts, setComPorts] = useState<{path: string}[]>([]);
-  const [logs, setLogs] = useState<string[]>([]);
-  const [selectedPort, setSelectedPort] = useState("");
-  const [isRovConnected, setIsRovConnected] = useAtom(
-    isRovConnectedAtom
-  );
-  const [isControllerConnected, setIsControllerConnected] = useAtom(
-    isControllerConnectedAtom
-  );
-  /**
-   * This primary effect hook manages all socket event listeners and the
-   * Gamepad API polling for this component.
-   */
-  useEffect(() => {
-    // --- Socket Event Handlers ---
-    const handleLogMessage = (log: {message: string}) => {
-      const formattedLog = `>> ${log.message}`;
-      setLogs((prev) => [...prev.slice(-20), formattedLog]);
+    // --- Local State Management ---
+    const [logs, setLogs] = useState<string[]>([]);
+    const [rosBridgeUrl, setRosBridgeUrl] = useState(
+        "ws://localhost:9090",
+    );
+    const [customUrl, setCustomUrl] = useState("");
+    const [isRovConnected, setIsRovConnected] = useAtom(
+        isRovConnectedAtom,
+    );
+    const [isControllerConnected, setIsControllerConnected] = useAtom(
+        isControllerConnectedAtom,
+    );
+
+    /**
+     * Adds a log message to the logs array
+     * @param message - The message to log
+     */
+    const addLog = (message: string) => {
+        const timestamp = new Date().toLocaleTimeString();
+        const formattedLog = `[${timestamp}] ${message}`;
+        setLogs((prev) => [...prev.slice(-20), formattedLog]);
     };
 
-    const handlePortsList = (ports: {path: string}[]) => {
-      setComPorts(ports);
+    /**
+     * Main effect hook for managing socket event listeners and gamepad polling
+     */
+    useEffect(() => {
+        // --- Socket Event Handlers ---
+        const handleLogMessage = (log: {message: string}) => {
+            addLog(log.message);
+        };
+
+        const handleRosBridgeConnectionStatus = (status: {
+            status: "connected" | "disconnected" | "error";
+            message: string;
+            url?: string;
+        }) => {
+            setIsRovConnected(status.status === "connected");
+            addLog(status.message);
+            if (status.url) {
+                setRosBridgeUrl(status.url);
+            }
+        };
+
+        const handleError = (error: {
+            message: string;
+            error?: string;
+        }) => {
+            const errorMsg = error.error
+                ? `${error.message}: ${error.error}`
+                : error.message;
+            addLog(`ERROR: ${errorMsg}`);
+        };
+
+        // --- Gamepad Connection Polling ---
+        const checkGamepad = () => {
+            const gamepads = navigator.getGamepads();
+            const isConnected = Array.from(gamepads).some(
+                (gp) => gp !== null,
+            );
+            setIsControllerConnected((prev) =>
+                prev === isConnected ? prev : isConnected,
+            );
+        };
+        const gamepadInterval = window.setInterval(checkGamepad, 500);
+
+        // --- Register Socket Listeners ---
+        socket.on("rov:log", handleLogMessage);
+        socket.on("rov:error", handleError);
+        socket.on(
+            "rov:connection-status",
+            handleRosBridgeConnectionStatus,
+        );
+
+        // Check initial connection status
+        events.checkRosBridgeStatus();
+        addLog("Communication module initialized");
+
+        // --- Cleanup Function ---
+        return () => {
+            socket.off("rov:log", handleLogMessage);
+            socket.off("rov:error", handleError);
+            socket.off(
+                "rov:connection-status",
+                handleRosBridgeConnectionStatus,
+            );
+            clearInterval(gamepadInterval);
+        };
+    }, [setIsControllerConnected, setIsRovConnected]);
+
+    // --- Action Handlers ---
+    const handleRosBridgeConnect = () => {
+        const urlToConnect = customUrl.trim() || rosBridgeUrl;
+
+        if (!urlToConnect) {
+            addLog("Please enter a ROS Bridge URL");
+            return;
+        }
+
+        // Validate URL format
+        if (
+            !urlToConnect.startsWith("ws://") &&
+            !urlToConnect.startsWith("wss://")
+        ) {
+            addLog(
+                "Invalid URL format. Must start with ws:// or wss://",
+            );
+            return;
+        }
+
+        addLog(`Connecting to ROS Bridge at ${urlToConnect}...`);
+        events.connectToRosBridge(urlToConnect);
     };
 
-    const handleRovConnectionStatus = (status: {
-      status: "connected" | "disconnected";
-    }) => {
-      setIsRovConnected(status.status === "connected");
+    const handleRosBridgeDisconnect = () => {
+        addLog("Disconnecting from ROS Bridge...");
+        events.disconnectFromRosBridge();
     };
 
-    // --- Gamepad Connection Polling ---
-    const checkGamepad = () => {
-      const gamepads = navigator.getGamepads();
-      const isConnected = Array.from(gamepads).some(
-        (gp) => gp !== null
-      );
-      // Only update state if it has changed to prevent unnecessary re-renders.
-      setIsControllerConnected((prev) =>
-        prev === isConnected ? prev : isConnected
-      );
+    const handleCheckStatus = () => {
+        addLog("Checking ROS Bridge connection status...");
+        events.checkRosBridgeStatus();
     };
-    const gamepadInterval = window.setInterval(checkGamepad, 500); // Check every 500 milliseconds.
 
-    // --- Register Listeners ---
-    socket.on("rov:log", handleLogMessage);
-    socket.on("rov:error", handleLogMessage);
-    socket.on("rov:com-ports-list", handlePortsList);
-    socket.on("rov:connection-status", handleRovConnectionStatus);
+    return (
+        <Card title="Communication Configuration">
+            <Connection
+                rovConnected={isRovConnected}
+                controllerConnected={isControllerConnected}
+                onRovConnect={handleRosBridgeConnect}
+                onRovDisconnect={handleRosBridgeDisconnect}
+            />
+            <div className="h-4" />
 
-    events.findComPorts(); // Fetch ports on initial component mount
-    events.isRovConnected();
+            <div className="flex flex-col gap-3 w-full">
+                <div className="flex items-center justify-between w-full">
+                    <span className="text-white text-m font-bold">
+                        ROS Bridge URL
+                    </span>
+                </div>
 
-    // --- Cleanup Function ---
-    return () => {
-      socket.off("rov:log", handleLogMessage);
-      socket.off("rov:error", handleLogMessage);
-      socket.off("rov:com-ports-list", handlePortsList);
-      socket.off("rov:connection-status", handleRovConnectionStatus);
-      clearInterval(gamepadInterval); // Stop the gamepad polling
-    };
-  }, [setIsControllerConnected, setIsRovConnected]); // Empty dependency array ensures this runs only once on mount.
+                {/* Quick Select URLs */}
+                <div className="flex flex-col gap-2">
+                    {DEFAULT_ROS_BRIDGE_URLS.map((url) => (
+                        <button
+                            key={url}
+                            onClick={() => {
+                                setRosBridgeUrl(url);
+                                setCustomUrl("");
+                            }}
+                            className={`px-3 py-2 rounded text-sm transition-colors ${
+                                rosBridgeUrl === url && !customUrl
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-gray-700 text-gray-200 hover:bg-gray-600"
+                            }`}
+                        >
+                            {url}
+                        </button>
+                    ))}
+                </div>
 
-  // --- Action Handlers ---
-  const handleRovConnect = () => {
-    if (selectedPort) {
-      events.connectToRov(selectedPort);
-      setIsRovConnected(true); // Optimistically set connection status
-    } else {
-      setLogs((prev) => [
-        ...prev.slice(-20),
-        ">> Please select a COM port first.",
-      ]);
-    }
-  };
+                {/* Custom URL Input */}
+                <div className="flex flex-col gap-2">
+                    <span className="text-gray-300 text-sm">
+                        Custom URL:
+                    </span>
+                    <input
+                        type="text"
+                        value={customUrl}
+                        onChange={(e) => setCustomUrl(e.target.value)}
+                        placeholder="ws://your-ip:9090"
+                        className="px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    />
+                </div>
+            </div>
 
-  const handleRovDisconnect = () => {
-    events.isRovConnected();
+            <div className="h-4" />
 
-    events.disconnectFromRov();
-  };
+            <ActionButton
+                label="Check Connection Status"
+                onClick={handleCheckStatus}
+            />
 
-  // Prepare options for the SelectMenu component
-  const portOptions = comPorts.map((port) => ({
-    value: port.path,
-    label: port.path,
-  }));
+            <div className="h-4" />
 
-  return (
-    <Card title="Communication Configuration">
-      <Connection
-        rovConnected={isRovConnected}
-        controllerConnected={isControllerConnected}
-        onRovConnect={handleRovConnect}
-        onRovDisconnect={handleRovDisconnect}
-      />
-      <div className="h-4" />
-      <div className="flex items-center justify-between w-full">
-        <span className="text-white text-m font-bold">COM Port</span>
-        <div className="w-48">
-          <SelectMenu
-            value={selectedPort}
-            onChange={(e) => setSelectedPort(e.target.value)}
-            options={portOptions}
-            placeholder="Select Port..."
-          />
-        </div>
-      </div>
-      <div className="h-4" />
-
-      <ActionButton
-        label="Find COM Ports"
-        onClick={() => events.findComPorts()}
-      />
-      <div className="h-4" />
-
-      <Logs logMessages={logs} />
-    </Card>
-  );
+            <Logs logMessages={logs} />
+        </Card>
+    );
 }

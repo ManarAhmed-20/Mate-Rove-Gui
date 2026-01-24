@@ -1,4 +1,5 @@
-const arduinoConnection = require("../utils/esp/connection");
+const rosBridgeConnection = require("../utils/ros/connection");
+
 const SENSITIVITY_VALUES = {
   High: 1.0,
   Normal: 0.75,
@@ -13,21 +14,21 @@ const YAW_SENSITIVITY_VALUES = {
 
 let rovConfiguration = {
   thrusters: [
-    {location: "top", enabled: true, reversed: false},
-    {location: "frontLeft", enabled: true, reversed: false},
-    {location: "backLeft", enabled: true, reversed: false},
-    {location: "frontRight", enabled: true, reversed: false},
-    {location: "backRight", enabled: true, reversed: false},
+    { location: "top", enabled: true, reversed: false },
+    { location: "frontLeft", enabled: true, reversed: false },
+    { location: "backLeft", enabled: true, reversed: false },
+    { location: "frontRight", enabled: true, reversed: false },
+    { location: "backRight", enabled: true, reversed: false },
   ],
   grippers: [
-    {location: "front", enabled: true},
-    {location: "back", enabled: true},
+    { location: "front", enabled: true },
+    { location: "back", enabled: true },
   ],
   sensors: [
-    {type: "depth", enabled: true},
-    {type: "temperature", enabled: true},
-    {type: "acceleration", enabled: true},
-    {type: "rotation", enabled: true},
+    { type: "depth", enabled: true },
+    { type: "temperature", enabled: true },
+    { type: "acceleration", enabled: true },
+    { type: "rotation", enabled: true },
   ],
   sensitivity: {
     joystick: "High",
@@ -35,11 +36,22 @@ let rovConfiguration = {
   },
 };
 
+/**
+ * Gets sensitivity scalar values from configuration
+ * @param {object} config - ROV configuration
+ * @returns {object} Sensitivity scalars for joystick and yaw
+ */
 const getSensitivityScalars = (config) => ({
   joystick: SENSITIVITY_VALUES[config.sensitivity.joystick] || SENSITIVITY_VALUES.High,
   yaw: YAW_SENSITIVITY_VALUES[config.sensitivity.yaw] || YAW_SENSITIVITY_VALUES.High,
 });
 
+/**
+ * Calculates movement intents from controller readings
+ * @param {object} controllerReadings - Controller input data
+ * @param {object} sensitivity - Sensitivity scalars
+ * @returns {object} Movement intents (surge, sway, yaw, heave)
+ */
 const calculateMovementIntents = (controllerReadings, sensitivity) => ({
   surge: (controllerReadings.axes.L[1] || 0) * sensitivity.joystick,
   sway: 0,
@@ -47,6 +59,12 @@ const calculateMovementIntents = (controllerReadings, sensitivity) => ({
   heave: (controllerReadings.axes.R[1] || 0) * -1 * sensitivity.joystick,
 });
 
+/**
+ * Calculates thruster power based on location and movement intents
+ * @param {string} location - Thruster location
+ * @param {object} intents - Movement intents
+ * @returns {number} Thruster power value
+ */
 const calculateThrusterPower = (location, intents) => {
   switch (location) {
     case "top":
@@ -64,8 +82,19 @@ const calculateThrusterPower = (location, intents) => {
   }
 };
 
+/**
+ * Clamps power value between -1.0 and 1.0
+ * @param {number} power - Power value
+ * @returns {number} Clamped power value
+ */
 const clampPower = (power) => Math.max(-1.0, Math.min(1.0, power));
 
+/**
+ * Applies thruster configuration (enabled/reversed) to power value
+ * @param {number} power - Raw power value
+ * @param {object} thrusterConfig - Thruster configuration
+ * @returns {number} Configured power value
+ */
 const applyThrusterConfig = (power, thrusterConfig) => {
   if (!thrusterConfig.enabled) return 0.0;
   if (thrusterConfig.reversed) power = -power;
@@ -74,6 +103,12 @@ const applyThrusterConfig = (power, thrusterConfig) => {
   return clampPower(power);
 };
 
+/**
+ * Maps thruster configuration to power array
+ * @param {object} config - ROV configuration
+ * @param {object} intents - Movement intents
+ * @returns {number[]} Array of thruster power values
+ */
 const mapThrusters = (config, intents) => {
   return config.thrusters.map((thrusterConfig) => {
     const power = calculateThrusterPower(thrusterConfig.location, intents);
@@ -81,6 +116,12 @@ const mapThrusters = (config, intents) => {
   });
 };
 
+/**
+ * Maps gripper controls from controller readings
+ * @param {object} controllerReadings - Controller input data
+ * @param {object} config - ROV configuration
+ * @returns {number[]} Array of servo values
+ */
 const mapGrippers = (controllerReadings, config) => {
   const servo = [0, 0, 0, 0];
 
@@ -101,11 +142,22 @@ const mapGrippers = (controllerReadings, config) => {
   return servo;
 };
 
+/**
+ * Maps light controls from controller readings
+ * @param {object} controllerReadings - Controller input data
+ * @returns {number[]} Array of light values
+ */
 const mapLights = (controllerReadings) => {
   if (controllerReadings.buttons.R1) return [1, 1];
   return [0, 0];
 };
 
+/**
+ * Maps controller input to ROV command
+ * @param {object} controllerReadings - Controller input data
+ * @param {object} config - ROV configuration
+ * @returns {object} Command object with esc, servo, and lights
+ */
 function mapControllerToCommand(controllerReadings, config) {
   const sensitivity = getSensitivityScalars(config);
   const intents = calculateMovementIntents(controllerReadings, sensitivity);
@@ -117,83 +169,83 @@ function mapControllerToCommand(controllerReadings, config) {
   };
 }
 
+/**
+ * Registers Socket.IO event handlers for ROV communication
+ * @param {object} io - Socket.IO server instance
+ * @param {object} socket - Socket.IO socket instance
+ */
 const registerEventHandlers = (io, socket) => {
-  const arduino = () => arduinoConnection.api;
+  const rosApi = () => rosBridgeConnection.api;
 
+  // Check ROS Bridge connection status
   socket.on("rov:connection-status", () => {
-    const api = arduino();
-    const isReady = api.isArduinoReady();
+    const api = rosApi();
+    const isReady = api.isRosReady();
     io.emit("rov:connection-status", {
       status: isReady ? "connected" : "disconnected",
-      message: isReady ? "ROV is connected." : "ROV is disconnected.",
+      message: isReady ? "ROS Bridge is connected." : "ROS Bridge is disconnected.",
+      url: api.getCurrentUrl(),
     });
   });
 
-  socket.on("rov:find-com-ports", async () => {
-    try {
-      const api = arduino();
-      if (!api) return socket.emit("rov:error", {message: "Arduino module not ready."});
-      const ports = await api.listPorts();
-      socket.emit("rov:com-ports-list", ports);
-    } catch (error) {
-      socket.emit("rov:error", {
-        message: "Failed to find COM ports.",
-        error: error.message,
-      });
-    }
+  // Connect to ROS Bridge
+  socket.on("rov:connect", (rosBridgeUrl) => {
+    const api = rosApi();
+    if (!api) return socket.emit("rov:error", { message: "ROS Bridge module not ready." });
+    if (!rosBridgeUrl) return socket.emit("rov:error", { message: "No ROS Bridge URL was provided." });
+    api.connectToRosBridge(rosBridgeUrl);
   });
 
-  socket.on("rov:connect", (comPort) => {
-    const api = arduino();
-    if (!api) return socket.emit("rov:error", {message: "Arduino module not ready."});
-    if (!comPort) return socket.emit("rov:error", {message: "No COM Port was provided."});
-    api.connectToArduino(comPort);
-  });
-
+  // Disconnect from ROS Bridge
   socket.on("rov:disconnect", () => {
-    const api = arduino();
-    if (api) api.disconnectFromArduino();
+    const api = rosApi();
+    if (api) api.disconnectFromRosBridge();
   });
 
+  // Handle controller data and publish command to ROS
   socket.on("controller:data", (controllerReadings) => {
-    const api = arduino();
-    if (!api || !api.isArduinoReady()) return;
+    const api = rosApi();
+    if (!api || !api.isRosReady()) return;
 
     const command = mapControllerToCommand(controllerReadings, rovConfiguration);
-    api.sendDataToArduino(command);
+    api.publishCommand(command);
   });
 
+  // Get current configuration
   socket.on("config:get", () => {
     socket.emit("config:data", rovConfiguration);
   });
 
+  // Update configuration
   socket.on("config:update", (newConfig) => {
-    rovConfiguration = {...rovConfiguration, ...newConfig};
+    rovConfiguration = { ...rovConfiguration, ...newConfig };
     socket.emit("config:updated", {
       success: true,
       newConfig: rovConfiguration,
     });
   });
 
-  socket.on("config:thruster-test", ({thrusterIndex, value}) => {
-    const api = arduino();
-    if (!api || !api.isArduinoReady()) return;
+  // Test individual thruster
+  socket.on("config:thruster-test", ({ thrusterIndex, value }) => {
+    const api = rosApi();
+    if (!api || !api.isRosReady()) return;
 
     const escCommand = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
     if (thrusterIndex >= 0 && thrusterIndex < 6) {
       escCommand[thrusterIndex] = value / 100.0;
     }
 
-    api.sendDataToArduino({
+    api.publishCommand({
       esc: escCommand,
       servo: [0, 0, 0, 0],
       lights: [0, 0],
     });
   });
 
-  socket.on("config:gripper-test", ({gripperIndex, value}) => {
-    const api = arduino();
-    if (!api || !api.isArduinoReady()) return;
+  // Test individual gripper
+  socket.on("config:gripper-test", ({ gripperIndex, value }) => {
+    const api = rosApi();
+    if (!api || !api.isRosReady()) return;
 
     const servoCommand = [0, 0, 0, 0];
     if (gripperIndex === 1) {
@@ -204,7 +256,7 @@ const registerEventHandlers = (io, socket) => {
       servoCommand[3] = value;
     }
 
-    api.sendDataToArduino({
+    api.publishCommand({
       esc: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
       servo: servoCommand,
       lights: [0, 0],
