@@ -1,5 +1,6 @@
 // import { useAtom } from "jotai";
 // import { rovSensorDataAtom } from "../../../atoms/atoms";
+import TasksPanel from './components/TasksPanel';
 
 export default function CameraFeed() {
   
@@ -63,6 +64,7 @@ export default function CameraFeed() {
          </div>
 
       </div>
+       <TasksPanel />
     </div>
   );
 }
