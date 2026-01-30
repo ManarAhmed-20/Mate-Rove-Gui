@@ -5,6 +5,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import Layout from "./components/layout";
+import Camera from "./pages/camera/page";
 import ControlPanel from "./pages/control-panel/page";
 import Configurations from "./pages/configurations/page";
 import ControllerData from "./pages/configurations/components/communication/controllerData";
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Navigate to="/control-panel" replace />} />
           <Route path="*" element={<Navigate to="/control-panel" replace />} />
+          <Route path="camera" element={<Camera />} />
           <Route path="control-panel" element={<ControlPanel />} />
           <Route path="configurations" element={<Configurations />} />
         </Route>

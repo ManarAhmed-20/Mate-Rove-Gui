@@ -4,6 +4,7 @@ import CompetitionTimer from "./components/competition-timer";
 import Communication from "../configurations/components/communication/communication";
 import SensorsDisplay from "./components/sensors-display";
 import L2R2Triggers from "./components/L2R2Triggers";
+import TasksPanel from './components/TasksPanel';
 
 export default function ControlPanel() {
   return (
@@ -19,6 +20,8 @@ export default function ControlPanel() {
         <SensorsDisplay />
         <CompetitionTimer />
       </div>
+      <TasksPanel />
+
     </div>
   );
 }

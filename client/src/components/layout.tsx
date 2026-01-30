@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import LinkNavigator from "./link-navigator";
+// import TopBar from './components/TopBar';
 
 export default function Layout() {
   return (
