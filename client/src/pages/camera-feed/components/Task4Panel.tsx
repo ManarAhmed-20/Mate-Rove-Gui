@@ -34,7 +34,7 @@ export default function Task4Panel() {
   const currentDepth = hasData ? chartData[chartData.length - 1].depth : 0;
 
   return (
-    <div className="absolute right-20 top-32 z-30 bg-black/80 p-4 rounded-xl border border-cyan-500/30 w-80">
+    <div className="absolute right-20 top-20 z-30 bg-black/80 p-4 rounded-xl border border-cyan-500/30 w-80">
       
       <div className="flex justify-between items-start mb-1">
         <div>

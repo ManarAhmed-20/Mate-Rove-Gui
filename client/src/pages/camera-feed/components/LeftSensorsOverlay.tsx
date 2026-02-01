@@ -22,13 +22,13 @@ export default function LeftSensorsOverlay() {
 
   return (
     
-    <div className="absolute left-4 top-20 z-40 flex flex-col gap-1 select-none">
+    <div className="absolute left-4 top-20 z-40 flex flex-col gap-0.5 select-none">
       <span className="text-white font-black text-sm tracking-widest mb-0.5 uppercase">Depth</span>
 
-      <div className="relative flex items-start gap-4">
+      <div className="relative flex items-start gap-2">
         
         <div className="flex flex-col h-[380px]">
-          <div className="flex-1 flex flex-col justify-between text-sm font-bold text-gray-300 pb-2">
+          <div className="flex-1 flex flex-col justify-between text-sm font-bold text-gray-300 pb-1">
             <span>0m</span>
             <span>1m</span>
             <span>2m</span>
@@ -45,7 +45,7 @@ export default function LeftSensorsOverlay() {
           />
         </div>
 
-        <div className="flex flex-col justify-center h-[400px] ml-4">
+        <div className="flex flex-col justify-center h-[400px] ml-2">
           <div className="flex flex-col items-start leading-none">
             <span className="text-5xl font-black text-slate-900 drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">
               {depth.toFixed(1)}
@@ -58,7 +58,7 @@ export default function LeftSensorsOverlay() {
       </div>
 
 {/* mpu */}
-      <div className="space-y-4 bg-black/40 backdrop-blur-md p-5 rounded-2xl border border-white/5 w-80 shadow-2xl">
+      <div className="space-y-1.5 bg-black/40 backdrop-blur-md p-3 rounded-2xl border border-white/5 w-52 shadow-2xl">
         <SensorItem label="MPU (Acceleration)" values={acc} labels={['X', 'Y', 'Z']} />
         <SensorItem label="MPU (Rotation)" values={gyro} labels={['X', 'Y', 'Z']} />
         <SensorItem label="MPU (Angle)" values={angle} labels={['X', 'Y', 'Z']} />

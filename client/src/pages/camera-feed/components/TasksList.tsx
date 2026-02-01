@@ -1,4 +1,3 @@
-import { ChevronUp, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 // const TASKS = {
@@ -23,16 +22,16 @@ import { useState } from 'react';
 //   ]
 // };
 
-const TasksPanel = () => {
+const TasksList = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="fixed left-0 right-0 bottom-0 z-40 pointer-events-none">
-      <div className="pointer-events-auto">
+    <div className="fixed left-52 bottom-0 z-40 w-full pointer-events-none">
+  <div className="relative pointer-events-auto">
         {isExpanded && (
-          <div className="bg-[#0B1120]/60  backdrop-blur-lg border-t border-cyan-400/20 p-4 mx-6 mb-0 rounded-t-lg">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex gap-6 items-start">
+      <div className="absolute bottom-4 left-0 bg-[#0B1120]/60 backdrop-blur-lg border-t border-cyan-400/20 p-4 mx-6 rounded-t-lg">
+            <div className="max-w-5xl">
+              <div className="flex gap-4 items-start">
                 <div>
                   <p className="text-cyan-600 text-xs tracking-wider mb-2 font-semibold">THRUSTERS STATUS</p>
                   <div className="flex gap-2">
@@ -49,7 +48,7 @@ const TasksPanel = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-3 flex-1">
+                <div className="grid grid-cols-5 gap-2 flex-1">
                   <div className="bg-cyan-500/8 backdrop-blur-sm border border-cyan-400/20 rounded p-2">
                     <div className="text-cyan-400 font-bold text-xs mb-1">Task 1</div>
                     <div className="space-y-0.5 text-xs">
@@ -87,6 +86,20 @@ const TasksPanel = () => {
                   </div>
 
                   <div className="bg-cyan-500/8 backdrop-blur-sm border border-cyan-400/20 rounded p-2">
+                    <div className="space-y-0.5 text-xs">
+                      <div className="flex items-center gap-1">
+                        <input type="checkbox" className="w-2 h-2" readOnly />
+                        <span className="text-cyan-400/60">2.4 Recover Anchor</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input type="checkbox" className="w-2 h-2" readOnly />
+                        <span className="text-cyan-400/60">2.5 Service Observatory</span>
+                      </div>
+                      
+                    </div>
+                  </div>
+
+                  <div className="bg-cyan-500/8 backdrop-blur-sm border border-cyan-400/20 rounded p-2">
                     <div className="text-cyan-400 font-bold text-xs mb-1">Task 3</div>
                     <div className="space-y-0.5 text-xs">
                       <div className="flex items-center gap-1">
@@ -115,20 +128,17 @@ const TasksPanel = () => {
           </div>
         )}
 
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full bg-black/10 backdrop-blur-lg border-t border-cyan-400/20 hover:bg-black/20 transition-colors p-3 flex items-center justify-between mx-auto"
-        >
-          <span className="text-cyan-600 text-xs tracking-wider font-semibold">THRUSTERS STATUS</span>
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-cyan-400" />
-          ) : (
-            <ChevronUp className="w-4 h-4 text-cyan-400" />
-          )}
-        </button>
+{/* home indicator */}
+      <div className="w-full flex justify-center py-2">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-40 h-1.5 bg-black rounded-full -translate-x-52"
+      />
+    </div>
+
       </div>
     </div>
   );
 };
 
-export default TasksPanel;
+export default TasksList;

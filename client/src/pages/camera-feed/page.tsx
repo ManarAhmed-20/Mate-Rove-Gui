@@ -1,13 +1,15 @@
 import { useState } from "react";
-import TasksPanel from "./components/TasksPanel";
+import TasksPanel from "./components/TasksList";
 import RightSideButtons from "./components/RightSideButtons";
 import Task1Panel from "./components/Task1Panel";
 import Task2Panel from "./components/Task2Panel";
 import Task4Panel from "./components/Task4Panel";
 import LeftSensorsOverlay from "./components/LeftSensorsOverlay";
+import { RiEyeLine, RiEyeOffLine } from "react-icons/ri";
 
 export default function CameraFeed() {
   const [activePanel, setActivePanel] = useState<number | null>(null);
+  const [hudVisible, setHudVisible] = useState(true);
 
   return (
     <div className="relative w-full h-screen bg-black pt-16 flex flex-col overflow-hidden">
@@ -24,12 +26,6 @@ export default function CameraFeed() {
           <span className="absolute top-4 right-4 bg-black/70 px-3 py-1 rounded text-xs text-[#38bdf8] font-bold z-10 border border-[#38bdf8]/30 backdrop-blur-sm shadow-lg">
             CAM 1
           </span>
-          {/* Crosshair Overlay for Cam */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-            <div className="w-8 h-8 border-2 border-white/50 rounded-full"></div>
-            <div className="absolute w-12 h-px bg-white/50"></div>
-            <div className="absolute h-12 w-px bg-white/50"></div>
-          </div>
         </div>
 
         {/* CAM 2 */}
@@ -75,6 +71,21 @@ export default function CameraFeed() {
         </div>
       </div>
 
+  {/* clean view */}
+  <button
+    onClick={() => setHudVisible(!hudVisible)}
+    className="absolute left-1/2 top-96 z-50 -translate-x-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-[#0B1120]/90  border border-white/30 flex items-center justify-center text-white hover:bg-black hover:border-cyan-400 hover:text-cyan-200 transition-all duration-200 shadow-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+    title={hudVisible ? "hide" : "visible"}
+  >
+    {hudVisible ? (
+      <RiEyeOffLine size={22} />
+    ) : (
+      <RiEyeLine size={22} />
+    )}
+  </button>
+
+  {hudVisible && (
+    <>
       <LeftSensorsOverlay />
 
       <RightSideButtons activePanel={activePanel} setActivePanel={setActivePanel} />
@@ -88,6 +99,9 @@ export default function CameraFeed() {
     </div>
 
       <TasksPanel />
+    </>
+  )}
+      
     </div>
   );
 }

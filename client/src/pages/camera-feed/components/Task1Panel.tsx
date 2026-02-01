@@ -18,7 +18,7 @@ export default function Task1Panel() {
   };
 
   return (
-    <div className="absolute right-20 top-32 z-30 bg-black/80 p-4 rounded-xl border border-cyan-500/30 w-80">
+    <div className="absolute right-20 top-20 z-30 bg-black/80 p-4 rounded-xl border border-cyan-500/30 w-80">
       
       <div className="flex gap-3 mb-6">
         <button className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border-2 border-cyan-500 bg-cyan-500/10 text-cyan-400">
