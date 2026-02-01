@@ -1,3 +1,4 @@
+// RightSideButtons.tsx
 interface RightSideButtonsProps {
   activePanel: number | null;
   setActivePanel: (panel: number | null) => void;
@@ -12,10 +13,10 @@ export default function RightSideButtons({ activePanel, setActivePanel }: RightS
         <button
           key={num}
           onClick={() => setActivePanel(activePanel === num ? null : num)}
-          className={`w-14 h-14 rounded-lg font-bold text-base transition-all duration-200 flex items-center justify-center ${
+          className={`w-10 h-10 rounded-lg font-bold text-base transition-all duration-200 flex items-center justify-center ${
             activePanel === num
-              ? 'bg-cyan-500 text-gray-900 shadow-lg shadow-cyan-500/70'
-              : 'bg-cyan-500 text-gray-900 hover:bg-cyan-600 shadow-lg'
+              ? 'bg-[#0B1120] text-white border-4 border-white shadow-lg shadow-white/70'
+              : 'bg-[#0B1120] text-cyan-500 hover:bg-cyan-600 hover:text-[#0B1120] shadow-lg'
           }`}
         >
           {num}

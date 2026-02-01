@@ -1,6 +1,28 @@
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
+// const TASKS = {
+//   task1: [
+//     { id: "1.1", label: "1.1 Species Collection" },
+//     { id: "1.2", label: "1.2 Coral Ridge Model" },
+//     { id: "1.3", label: "1.3 Fly Transect" },
+//   ],
+//   task2: [
+//     { id: "2.1", label: "2.1 Count Green Crabs" },
+//     { id: "2.2", label: "2.2 Iceberg Tracking" },
+//     { id: "2.3", label: "2.3 Whale Safe Gear" },
+//     { id: "2.4", label: "2.4 Recover Anchor" },
+//     { id: "2.5", label: "2.5 Service Observatory" },
+//   ],
+//   task3: [
+//     { id: "3.1", label: "3.1 Install Micropile" },
+//     { id: "3.2", label: "3.2 Power Connection" },
+//   ],
+//   task4: [
+//     { id: "4.1", label: "4.1 Float Profiling" },
+//   ]
+// };
+
 const TasksPanel = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -8,7 +30,7 @@ const TasksPanel = () => {
     <div className="fixed left-0 right-0 bottom-0 z-40 pointer-events-none">
       <div className="pointer-events-auto">
         {isExpanded && (
-          <div className="bg-black/15 backdrop-blur-lg border-t border-cyan-400/20 p-4 mx-6 mb-0 rounded-t-lg">
+          <div className="bg-[#0B1120]/60  backdrop-blur-lg border-t border-cyan-400/20 p-4 mx-6 mb-0 rounded-t-lg">
             <div className="max-w-7xl mx-auto">
               <div className="flex gap-6 items-start">
                 <div>
