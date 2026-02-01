@@ -4,6 +4,7 @@ import RightSideButtons from "./components/RightSideButtons";
 import Task1Panel from "./components/Task1Panel";
 import Task2Panel from "./components/Task2Panel";
 import Task4Panel from "./components/Task4Panel";
+import LeftSensorsOverlay from "./components/LeftSensorsOverlay";
 
 export default function CameraFeed() {
   const [activePanel, setActivePanel] = useState<number | null>(null);
@@ -20,7 +21,7 @@ export default function CameraFeed() {
             backgroundPosition: "center",
           }}
         >
-          <span className="absolute top-4 left-4 bg-black/70 px-3 py-1 rounded text-xs text-[#38bdf8] font-bold z-10 border border-[#38bdf8]/30 backdrop-blur-sm shadow-lg">
+          <span className="absolute top-4 right-4 bg-black/70 px-3 py-1 rounded text-xs text-[#38bdf8] font-bold z-10 border border-[#38bdf8]/30 backdrop-blur-sm shadow-lg">
             CAM 1
           </span>
           {/* Crosshair Overlay for Cam */}
@@ -54,7 +55,7 @@ export default function CameraFeed() {
             backgroundPosition: "center",
           }}
         >
-          <span className="absolute top-4 left-4 bg-black/70 px-3 py-1 rounded text-xs text-[#38bdf8] font-bold z-10 border border-[#38bdf8]/30 backdrop-blur-sm shadow-lg">
+          <span className="absolute top-4 right-4 bg-black/70 px-3 py-1 rounded text-xs text-[#38bdf8] font-bold z-10 border border-[#38bdf8]/30 backdrop-blur-sm shadow-lg">
             CAM 3
           </span>
         </div>
@@ -73,6 +74,8 @@ export default function CameraFeed() {
           </span>
         </div>
       </div>
+
+      <LeftSensorsOverlay />
 
       <RightSideButtons activePanel={activePanel} setActivePanel={setActivePanel} />
 
