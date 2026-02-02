@@ -6,23 +6,17 @@ import {IoScanOutline} from "react-icons/io5";
 export default function Task1Panel() {
     const [snapshots, setSnapshots] = useAtom(task1SnapshotsAtom);
 
-    const handleCapture = () => {
-        // Find the video stream element (CAM 1)
-        const videoElement = document.querySelector(
-            "#cam1-feed",
-        ) as HTMLImageElement;
+    const handleCapture = (camId: string, camLabel: string) => {
+        const videoElement = document.querySelector(camId) as HTMLImageElement;
 
         if (!videoElement) {
-            console.error("Video element not found");
+            console.error(`Video element ${camId} not found`);
             return;
         }
 
-        // Create a canvas to capture the frame
         const canvas = document.createElement("canvas");
-        canvas.width =
-            videoElement.naturalWidth || videoElement.width || 640;
-        canvas.height =
-            videoElement.naturalHeight || videoElement.height || 480;
+        canvas.width = videoElement.naturalWidth || videoElement.width || 640;
+        canvas.height = videoElement.naturalHeight || videoElement.height || 480;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) {
@@ -30,23 +24,14 @@ export default function Task1Panel() {
             return;
         }
 
-        // Draw the current frame from the image/video onto the canvas
-        ctx.drawImage(
-            videoElement,
-            0,
-            0,
-            canvas.width,
-            canvas.height,
-        );
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
-        // Convert canvas to base64 image data URL
         const imageDataUrl = canvas.toDataURL("image/png");
 
         const newSnapshot = {
             url: imageDataUrl,
-            timestamp: new Date().toLocaleTimeString("en-GB", {
-                hour12: false,
-            }),
+            timestamp: new Date().toLocaleTimeString("en-GB", {hour12: false}),
+            cam: camLabel,
         };
 
         setSnapshots([newSnapshot, ...snapshots]);
@@ -54,21 +39,44 @@ export default function Task1Panel() {
 
     return (
         <div className="absolute right-20 top-20 z-30 bg-black/80 p-4 rounded-xl border border-cyan-500/30 w-80">
-            <div className="flex gap-3 mb-6">
-                <button className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border-2 border-cyan-500 bg-cyan-500/10 text-cyan-400">
-                    <TbGrid4X4 size={32} strokeWidth={1.5} />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">
-                        Grid
+            <div className="grid grid-cols-2 gap-3 mb-6">
+                <button
+                    onClick={() => handleCapture("#cam1-feed", "CAM 1")}
+                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl border border-gray-700 bg-transparent text-white hover:bg-white/5 transition-colors"
+                >
+                    <IoScanOutline size={32} strokeWidth={1.5} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500/80">
+                        Capture 1
                     </span>
                 </button>
 
                 <button
-                    onClick={handleCapture}
-                    className="flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl border border-gray-700 bg-transparent text-white hover:bg-white/5 transition-colors"
+                    onClick={() => handleCapture("#cam2-feed", "CAM 2")}
+                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl border border-gray-700 bg-transparent text-white hover:bg-white/5 transition-colors"
                 >
                     <IoScanOutline size={32} strokeWidth={1.5} />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500/80">
-                        Capture
+                        Capture 2
+                    </span>
+                </button>
+
+                <button
+                    onClick={() => handleCapture("#cam3-feed", "CAM 3")}
+                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl border border-gray-700 bg-transparent text-white hover:bg-white/5 transition-colors"
+                >
+                    <IoScanOutline size={32} strokeWidth={1.5} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500/80">
+                        Capture 3
+                    </span>
+                </button>
+
+                <button
+                    onClick={() => handleCapture("#cam4-feed", "CAM 4")}
+                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl border border-gray-700 bg-transparent text-white hover:bg-white/5 transition-colors"
+                >
+                    <IoScanOutline size={32} strokeWidth={1.5} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500/80">
+                        Capture 4
                     </span>
                 </button>
             </div>
@@ -95,7 +103,7 @@ export default function Task1Panel() {
                             }}
                         />
                         <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded text-[9px] text-white font-mono border border-white/10">
-                            {snap.timestamp}
+                            {snap.cam} - {snap.timestamp}
                         </div>
                     </div>
                 ))}
